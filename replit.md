@@ -7,9 +7,10 @@ Professional event management portfolio website for Finest Hospitality company. 
 - **Removed database dependency** - Now uses in-memory storage for faster performance
 - **Removed authentication** - Simplified to public-only pages
 - **Removed admin dashboard** - Portfolio is managed via code/data updates
-- **Contact form logs to console** - Inquiries are logged (ready for email integration)
-- **Added professional event images** - 12 high-quality stock images for portfolio events
+- **Contact form ready for email** - Inquiries will be sent to admin email (awaiting Resend API key)
+- **Added professional event images** - Mix of stock and AI-generated images for portfolio
 - **Simplified architecture** - Landing page, portfolio, and contact form only
+- **Expanded portfolio** - Now showcasing 14 events with diverse imagery
 
 ## Current Architecture
 
@@ -19,20 +20,20 @@ Professional event management portfolio website for Finest Hospitality company. 
 - **404 Page** - Custom not found page
 
 ### Data Storage
-- **In-Memory Events** - 12 pre-configured events with categories:
-  - Wedding events
-  - Corporate events
-  - Destination weddings
-  - Private celebrations
+- **In-Memory Events** - 14 pre-configured events with categories:
+  - Wedding events (7 events)
+  - Corporate events (4 events)
+  - Destination weddings (2 events)
+  - Private celebrations (3 events)
 - **No Database** - All event data stored in `server/storage.ts`
 
 ### Contact Form
 - Validates user input (name, email, event type, message)
-- Currently **logs inquiries to console**
-- Ready for email integration using Resend connector:
-  1. Set up Resend connector in integrations
-  2. Add email sending logic to `server/routes.ts`
-  3. Configure admin email recipient
+- **Awaiting Resend API key** to send emails to admin
+- Email integration ready to implement:
+  1. User creating Resend account
+  2. Will add RESEND_API_KEY secret
+  3. Will add admin email sending logic to `server/routes.ts`
 
 ### Event Categories
 - `wedding` - Traditional and luxury Indian weddings
@@ -63,27 +64,26 @@ Professional event management portfolio website for Finest Hospitality company. 
 - `client/src/pages/landing.tsx` - Landing page with contact form
 - `client/src/pages/portfolio.tsx` - Event portfolio gallery
 
-## Adding Email Integration (Optional)
-To send contact form submissions via email:
+## Email Integration (In Progress)
+User is setting up Resend account for contact form email notifications.
 
-1. Use Resend integration (already discovered):
-   ```
-   connector:ccfg_resend_01K69QKYK789WN202XSE3QS17V
-   ```
-
-2. Update `server/routes.ts` inquiry endpoint to send email
-
-3. Configure admin email recipient
+**Next Steps**:
+1. User will provide RESEND_API_KEY
+2. Add secret using `ask_secrets` tool
+3. Update `server/routes.ts` to send email to admin when inquiry is submitted
+4. Configure admin email recipient address
 
 ## Event Images
-All events use professional stock images located in:
-- `attached_assets/stock_images/`
-- Served via static file serving
-- Referenced in event data as `/attached_assets/stock_images/[filename].jpg`
+Portfolio events use a mix of professional images:
+- **Stock images**: `attached_assets/stock_images/` (12 images)
+- **Generated images**: `attached_assets/generated_images/` (6 images)
+- All served via static file serving
+- Referenced in event data with full paths
 
 ## Notes for Future Development
 - No authentication required - fully public site
 - Events are hardcoded in storage - update `server/storage.ts` to add/modify events
-- Contact forms log to console - check server logs for inquiries
+- Contact forms awaiting email integration - currently structured but not sending
 - Theme persisted in localStorage as "finest-hospitality-theme"
 - All navigation uses Wouter `Link` component for SPA routing
+- Portfolio now features 14 events showcasing both stock and AI-generated imagery
