@@ -14,12 +14,12 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Sparkles, Users, Calendar, Award, ArrowRight, Mail, Phone, MapPin } from "lucide-react";
-import heroImage from "@assets/generated_images/Grand_event_venue_entrance_1ef7554f.png";
-import weddingImage from "@assets/generated_images/Luxury_wedding_reception_venue_ad069ecc.png";
-import corporateImage from "@assets/generated_images/Corporate_gala_dinner_event_a9f58349.png";
-import destinationImage from "@assets/generated_images/Destination_wedding_ceremony_setup_b1bdc699.png";
-import privateImage from "@assets/generated_images/Upscale_private_party_celebration_37f8a0d0.png";
-import detailImage from "@assets/generated_images/Elegant_table_setting_details_b2fd9bec.png";
+import heroImage from "@assets/stock_images/luxury_indian_weddin_6c287dfd.jpg";
+import weddingImage from "@assets/stock_images/indian_wedding_cerem_96f31f4b.jpg";
+import corporateImage from "@assets/stock_images/mumbai_corporate_eve_851a13ca.jpg";
+import destinationImage from "@assets/stock_images/goa_beach_wedding_de_8c4c5f5b.jpg";
+import privateImage from "@assets/stock_images/indian_party_celebra_c1fa1c78.jpg";
+import detailImage from "@assets/stock_images/indian_festival_cele_f3e1876a.jpg";
 import type { Event } from "@shared/schema";
 
 export default function Landing() {
@@ -80,7 +80,7 @@ export default function Landing() {
             Finest Hospitality
           </h1>
           <p className="text-xl md:text-2xl text-white/90 mb-8 leading-relaxed">
-            Crafting Unforgettable Experiences
+            Creating Magical Celebrations Across India
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <Button
@@ -118,27 +118,27 @@ export default function Landing() {
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div>
               <h2 className="text-4xl md:text-5xl font-semibold mb-6 text-foreground">
-                Event Management Excellence
+                India's Premier Event Planners
               </h2>
               <p className="text-lg leading-relaxed text-muted-foreground mb-6">
-                For over a decade, Finest Hospitality has been the premier choice for discerning clients seeking exceptional event experiences. Our dedicated team brings passion, precision, and unparalleled expertise to every celebration.
+                For over a decade, Finest Hospitality has been India's premier choice for crafting extraordinary celebrations. From grand Indian weddings to corporate galas, we blend traditional elegance with modern sophistication to create unforgettable experiences.
               </p>
               <p className="text-lg leading-relaxed text-muted-foreground">
-                From intimate gatherings to grand galas, we transform visions into reality with meticulous attention to detail and a commitment to exceeding expectations.
+                Our passionate team specializes in authentic Indian celebrations, destination weddings, and corporate events across major cities including Mumbai, Delhi, Bangalore, and beyond. We honor traditions while embracing innovation.
               </p>
             </div>
             <div className="grid grid-cols-2 gap-6">
               <Card className="hover-elevate transition-all duration-300" data-testid="card-stat-events">
                 <CardContent className="p-6 text-center">
                   <Calendar className="h-10 w-10 text-primary mx-auto mb-3" />
-                  <p className="text-3xl md:text-4xl font-bold text-foreground mb-2">500+</p>
+                  <p className="text-3xl md:text-4xl font-bold text-foreground mb-2">1000+</p>
                   <p className="text-sm text-muted-foreground uppercase tracking-wide">Events Managed</p>
                 </CardContent>
               </Card>
               <Card className="hover-elevate transition-all duration-300" data-testid="card-stat-years">
                 <CardContent className="p-6 text-center">
                   <Award className="h-10 w-10 text-primary mx-auto mb-3" />
-                  <p className="text-3xl md:text-4xl font-bold text-foreground mb-2">10</p>
+                  <p className="text-3xl md:text-4xl font-bold text-foreground mb-2">12</p>
                   <p className="text-sm text-muted-foreground uppercase tracking-wide">Years Excellence</p>
                 </CardContent>
               </Card>
@@ -152,7 +152,7 @@ export default function Landing() {
               <Card className="hover-elevate transition-all duration-300" data-testid="card-stat-team">
                 <CardContent className="p-6 text-center">
                   <Users className="h-10 w-10 text-primary mx-auto mb-3" />
-                  <p className="text-3xl md:text-4xl font-bold text-foreground mb-2">25+</p>
+                  <p className="text-3xl md:text-4xl font-bold text-foreground mb-2">50+</p>
                   <p className="text-sm text-muted-foreground uppercase tracking-wide">Expert Staff</p>
                 </CardContent>
               </Card>
@@ -222,9 +222,9 @@ export default function Landing() {
                 <div className="h-48 mb-6 rounded-md overflow-hidden">
                   <img src={weddingImage} alt="Wedding services" className="w-full h-full object-cover" />
                 </div>
-                <h3 className="text-2xl font-semibold mb-4 text-foreground">Weddings</h3>
+                <h3 className="text-2xl font-semibold mb-4 text-foreground">Indian Weddings</h3>
                 <p className="text-muted-foreground leading-relaxed">
-                  Elegant ceremonies and receptions tailored to your love story, with every detail perfectly orchestrated.
+                  Traditional Hindu, Sikh, Muslim, and Christian weddings with authentic rituals, stunning mandap designs, and magnificent celebrations.
                 </p>
               </CardContent>
             </Card>
@@ -235,7 +235,7 @@ export default function Landing() {
                 </div>
                 <h3 className="text-2xl font-semibold mb-4 text-foreground">Corporate Events</h3>
                 <p className="text-muted-foreground leading-relaxed">
-                  Professional galas, conferences, and networking events that elevate your brand and impress stakeholders.
+                  Product launches, annual galas, conferences, and team celebrations across India's major business hubs with world-class hospitality.
                 </p>
               </CardContent>
             </Card>
@@ -244,9 +244,9 @@ export default function Landing() {
                 <div className="h-48 mb-6 rounded-md overflow-hidden">
                   <img src={privateImage} alt="Private parties" className="w-full h-full object-cover" />
                 </div>
-                <h3 className="text-2xl font-semibold mb-4 text-foreground">Private Parties</h3>
+                <h3 className="text-2xl font-semibold mb-4 text-foreground">Sangeet & Mehendi</h3>
                 <p className="text-muted-foreground leading-relaxed">
-                  Intimate celebrations and milestone moments designed with personal touches and sophisticated style.
+                  Vibrant sangeet nights, traditional mehendi ceremonies, and intimate pre-wedding celebrations with cultural authenticity.
                 </p>
               </CardContent>
             </Card>
@@ -255,9 +255,9 @@ export default function Landing() {
                 <div className="h-48 mb-6 rounded-md overflow-hidden">
                   <img src={destinationImage} alt="Destination events" className="w-full h-full object-cover" />
                 </div>
-                <h3 className="text-2xl font-semibold mb-4 text-foreground">Destination Events</h3>
+                <h3 className="text-2xl font-semibold mb-4 text-foreground">Destination Weddings</h3>
                 <p className="text-muted-foreground leading-relaxed">
-                  Seamless coordination of unforgettable experiences in stunning locations around the world.
+                  Breathtaking destination weddings in Goa, Udaipur, Jaipur, Kerala, and other exotic Indian locations with complete logistics.
                 </p>
               </CardContent>
             </Card>
@@ -271,23 +271,23 @@ export default function Landing() {
           <div className="grid md:grid-cols-2 gap-12">
             <div>
               <h2 className="text-4xl md:text-5xl font-semibold mb-6 text-foreground">
-                Let's Create Something Beautiful
+                Let's Create Magic Together
               </h2>
               <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
-                Ready to plan your perfect event? Contact us today and let's bring your vision to life with unparalleled expertise and care.
+                Ready to plan your dream celebration? Contact us today and let's transform your vision into an unforgettable Indian experience filled with joy, tradition, and elegance.
               </p>
               <div className="space-y-4">
                 <div className="flex items-center gap-3 text-muted-foreground">
                   <Mail className="h-5 w-5 text-primary" />
-                  <span>contact@finesthospitality.com</span>
+                  <span>contact@finesthospitality.in</span>
                 </div>
                 <div className="flex items-center gap-3 text-muted-foreground">
                   <Phone className="h-5 w-5 text-primary" />
-                  <span>+1 (555) 123-4567</span>
+                  <span>+91 98765 43210</span>
                 </div>
                 <div className="flex items-center gap-3 text-muted-foreground">
                   <MapPin className="h-5 w-5 text-primary" />
-                  <span>New York, NY</span>
+                  <span>Mumbai, Maharashtra</span>
                 </div>
               </div>
             </div>
@@ -386,7 +386,7 @@ export default function Landing() {
             <div>
               <h3 className="text-xl font-serif font-semibold mb-4">Finest Hospitality</h3>
               <p className="text-sm text-muted-foreground">
-                Crafting unforgettable experiences for over a decade
+                Creating magical Indian celebrations for over a decade
               </p>
             </div>
             <div>
@@ -417,18 +417,18 @@ export default function Landing() {
             <div>
               <h4 className="font-medium mb-4">Services</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>Weddings</li>
+                <li>Indian Weddings</li>
                 <li>Corporate Events</li>
-                <li>Private Parties</li>
-                <li>Destination Events</li>
+                <li>Sangeet & Mehendi</li>
+                <li>Destination Weddings</li>
               </ul>
             </div>
             <div>
               <h4 className="font-medium mb-4">Contact</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>contact@finesthospitality.com</li>
-                <li>+1 (555) 123-4567</li>
-                <li>New York, NY</li>
+                <li>contact@finesthospitality.in</li>
+                <li>+91 98765 43210</li>
+                <li>Mumbai, Maharashtra</li>
               </ul>
             </div>
           </div>
