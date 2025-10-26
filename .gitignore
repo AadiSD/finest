@@ -4,3 +4,17 @@ dist
 server/public
 vite.config.ts.*
 *.tar.gz
+
+# Local / environment
+.local/
+.env
+.env.local
+.vscode/
+
+# Replit state
+.replit
+
+# Lockfiles
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
