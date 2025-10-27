@@ -1,0 +1,21 @@
+# Render service manifest (Infrastructure as Code)
+# This describes a web service that builds with `npm run build` and starts with `npm start`.
+# After creating the service on Render you should set secrets (DATABASE_URL, SESSION_SECRET, etc.) in the Render UI
+
+services:
+  - type: web
+    name: finest-web
+    env: node
+    plan: free
+    repo: https://github.com/AadiSD/finest
+    branch: main
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    # Optionally set environment variables here as placeholders. Replace values on Render UI with real secrets.
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SESSION_SECRET
+        value: "REPLACE_WITH_SECRET"
+      - key: DATABASE_URL
+        value: "REPLACE_WITH_DATABASE_URL"
