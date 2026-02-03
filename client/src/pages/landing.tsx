@@ -2,69 +2,43 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { insertInquirySchema, type InsertInquiry } from "@shared/schema";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { apiRequest, queryClient } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
-import { Sparkles, Users, Calendar, Award, ArrowRight, Mail, Phone, MapPin } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Sparkles, Users, Calendar, Award, ArrowRight, Mail, Phone, MapPin, ShieldCheck } from "lucide-react";
 import heroImage from "@assets/stock_images/luxury_indian_weddin_6c287dfd.jpg";
 import weddingImage from "@assets/stock_images/indian_wedding_cerem_96f31f4b.jpg";
 import corporateImage from "@assets/stock_images/mumbai_corporate_eve_851a13ca.jpg";
 import destinationImage from "@assets/stock_images/goa_beach_wedding_de_8c4c5f5b.jpg";
 import privateImage from "@assets/stock_images/indian_party_celebra_c1fa1c78.jpg";
-import detailImage from "@assets/stock_images/indian_festival_cele_f3e1876a.jpg";
 import type { Event } from "@shared/schema";
 
 export default function Landing() {
-  const { toast } = useToast();
-
   const { data: featuredEvents = [] } = useQuery<Event[]>({
     queryKey: ["/api/events/featured"],
   });
 
-  const form = useForm<InsertInquiry>({
-    resolver: zodResolver(insertInquirySchema),
-    defaultValues: {
-      name: "",
-      email: "",
-      eventType: "",
-      message: "",
-    },
-  });
-
-  const inquiryMutation = useMutation({
-    mutationFn: async (data: InsertInquiry) => {
-      return await apiRequest("POST", "/api/inquiries", data);
-    },
-    onSuccess: () => {
-      toast({
-        title: "Inquiry Sent",
-        description: "Thank you! We'll get back to you soon.",
-      });
-      form.reset();
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to send inquiry",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const onSubmit = (data: InsertInquiry) => {
-    inquiryMutation.mutate(data);
-  };
 
   return (
     <div className="min-h-screen">
+      {/* Header */}
+      <header className="fixed top-0 left-0 right-0 z-40 bg-background/80 backdrop-blur border-b">
+        <div className="max-w-7xl mx-auto flex items-center justify-between px-6 md:px-12 lg:px-20 py-4">
+          <span className="text-lg font-semibold">Finest Hospitality</span>
+          <div className="flex items-center gap-4 text-sm">
+            <Link href="/portfolio" className="text-muted-foreground hover:text-foreground transition-colors">
+              Portfolio
+            </Link>
+            <Link href="/event-planner" className="text-muted-foreground hover:text-foreground transition-colors">
+              Event Planner
+            </Link>
+            <Button asChild variant="ghost" size="icon" data-testid="button-admin-access">
+              <Link href="/event-planner#admin-panel">
+                <ShieldCheck className="h-5 w-5" />
+              </Link>
+            </Button>
+          </div>
+        </div>
+      </header>
+
       {/* Hero Section */}
       <section className="relative h-screen flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0">
@@ -274,9 +248,12 @@ export default function Landing() {
                 Let's Create Magic Together
               </h2>
               <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
-                Ready to plan your dream celebration? Contact us today and let's transform your vision into an unforgettable Indian experience filled with joy, tradition, and elegance.
+                Ready to plan your dream celebration? Use our smart estimator and booking tools to outline your event, or reach out directly for a personal touch.
               </p>
-              <div className="space-y-4">
+              <Button asChild size="lg" data-testid="button-plan-event">
+                <Link href="/event-planner">Estimate &amp; Book Your Event</Link>
+              </Button>
+              <div className="space-y-4 mt-8">
                 <div className="flex items-center gap-3 text-muted-foreground">
                   <Mail className="h-5 w-5 text-primary" />
                   <span>contact@finesthospitality.in</span>
@@ -291,88 +268,31 @@ export default function Landing() {
                 </div>
               </div>
             </div>
-            <Card data-testid="card-contact-form">
+            <Card data-testid="card-contact-highlights">
               <CardContent className="p-8">
-                <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                    <FormField
-                      control={form.control}
-                      name="name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Name</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Your name" {...field} data-testid="input-name" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="email"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Email</FormLabel>
-                          <FormControl>
-                            <Input type="email" placeholder="your@email.com" {...field} data-testid="input-email" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="eventType"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Event Type</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger data-testid="select-event-type">
-                                <SelectValue placeholder="Select event type" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="wedding">Wedding</SelectItem>
-                              <SelectItem value="corporate">Corporate Event</SelectItem>
-                              <SelectItem value="private">Private Party</SelectItem>
-                              <SelectItem value="destination">Destination Event</SelectItem>
-                              <SelectItem value="other">Other</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="message"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Message</FormLabel>
-                          <FormControl>
-                            <Textarea
-                              placeholder="Tell us about your event..."
-                              className="resize-none min-h-[120px]"
-                              {...field}
-                              data-testid="textarea-message"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <Button
-                      type="submit"
-                      className="w-full"
-                      disabled={inquiryMutation.isPending}
-                      data-testid="button-send-inquiry"
-                    >
-                      {inquiryMutation.isPending ? "Sending..." : "Send Inquiry"}
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-2xl font-semibold text-foreground mb-2">Plan your event in minutes</h3>
+                    <p className="text-muted-foreground">
+                      Use the estimator to understand budget ranges, then switch to booking when you are ready to lock a date.
+                    </p>
+                  </div>
+                  <div className="rounded-lg border bg-muted/40 p-5 space-y-3">
+                    <p className="text-sm uppercase tracking-wide text-muted-foreground">
+                      Quick Actions
+                    </p>
+                    <Button asChild className="w-full" data-testid="button-contact-estimate">
+                      <Link href="/event-planner">Estimate Event Budget</Link>
                     </Button>
-                  </form>
-                </Form>
+                    <Button asChild variant="outline" className="w-full" data-testid="button-contact-book">
+                      <Link href="/event-planner#booking">Book Your Date</Link>
+                    </Button>
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    Need a personal consultation? Reach us at <span className="font-medium text-foreground">+91 98765 43210</span> or{" "}
+                    <span className="font-medium text-foreground">contact@finesthospitality.in</span>.
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </div>
@@ -398,6 +318,11 @@ export default function Landing() {
                   </Link>
                 </li>
                 <li>
+                  <Link href="/event-planner" className="hover:text-foreground transition-colors">
+                    Event Planner
+                  </Link>
+                </li>
+                <li>
                   <button
                     onClick={() => {
                       document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' });
@@ -408,9 +333,9 @@ export default function Landing() {
                   </button>
                 </li>
                 <li>
-                  <a href="/api/login" className="hover:text-foreground transition-colors cursor-pointer" data-testid="link-login">
-                    Login
-                  </a>
+                  <Link href="/event-planner#admin-panel" className="hover:text-foreground transition-colors">
+                    Admin Access
+                  </Link>
                 </li>
               </ul>
             </div>
