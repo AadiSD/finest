@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { Sparkles, Users, Calendar, Award, ArrowRight, Mail, Phone, MapPin } from "lucide-react";
+import { Sparkles, Users, Calendar, Award, ArrowRight, Mail, Phone, MapPin, ShieldCheck } from "lucide-react";
 import heroImage from "@assets/stock_images/luxury_indian_weddin_6c287dfd.jpg";
 import weddingImage from "@assets/stock_images/indian_wedding_cerem_96f31f4b.jpg";
 import corporateImage from "@assets/stock_images/mumbai_corporate_eve_851a13ca.jpg";
@@ -22,6 +22,26 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen">
+      {/* Header */}
+      <header className="fixed top-0 left-0 right-0 z-40 bg-background/80 backdrop-blur border-b">
+        <div className="max-w-7xl mx-auto flex items-center justify-between px-6 md:px-12 lg:px-20 py-4">
+          <span className="text-lg font-semibold">Finest Hospitality</span>
+          <div className="flex items-center gap-4 text-sm">
+            <Link href="/portfolio" className="text-muted-foreground hover:text-foreground transition-colors">
+              Portfolio
+            </Link>
+            <Link href="/event-planner" className="text-muted-foreground hover:text-foreground transition-colors">
+              Event Planner
+            </Link>
+            <Button asChild variant="ghost" size="icon" data-testid="button-admin-access">
+              <Link href="/event-planner#admin-panel">
+                <ShieldCheck className="h-5 w-5" />
+              </Link>
+            </Button>
+          </div>
+        </div>
+      </header>
+
       {/* Hero Section */}
       <section className="relative h-screen flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0">
@@ -321,9 +341,9 @@ export default function Landing() {
                   </button>
                 </li>
                 <li>
-                  <a href="/api/login" className="hover:text-foreground transition-colors cursor-pointer" data-testid="link-login">
-                    Login
-                  </a>
+                  <Link href="/event-planner#admin-panel" className="hover:text-foreground transition-colors">
+                    Admin Access
+                  </Link>
                 </li>
               </ul>
             </div>
