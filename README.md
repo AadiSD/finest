@@ -114,6 +114,20 @@ To publish the website:
 2. Test admin functionality with a promoted admin user
 3. Click the "Publish" button in Replit to deploy
 
+### Render (free full-stack hosting)
+
+This repo includes a full-stack Render deployment guide in `DEPLOY_RENDER.md`. The high-level steps are:
+
+1. Create a **Web Service** on Render linked to this repo.
+2. Set the build command to `npm ci && npm run build` and the start command to `npm start`.
+3. Add required environment variables in Render:
+   - `DATABASE_URL`
+   - `SESSION_SECRET`
+   - `NODE_ENV=production`
+   - Any provider keys you use (SMTP/OAuth/etc.)
+
+For more detail (including Render DB setup), follow the full guide in `DEPLOY_RENDER.md`.
+
 ## Support
 
 For issues or questions, contact the development team or refer to the Replit documentation.
