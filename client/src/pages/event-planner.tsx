@@ -121,7 +121,8 @@ export default function EventPlanner() {
 
   const [bookingRequests, setBookingRequests] = useState<BookingRequest[]>([]);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [adminCode, setAdminCode] = useState("");
+  const [adminName, setAdminName] = useState("");
+  const [adminPassword, setAdminPassword] = useState("");
 
   const [chatOpen, setChatOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState(initialChat);
@@ -219,20 +220,31 @@ export default function EventPlanner() {
                     <DialogHeader>
                       <DialogTitle>Admin Login</DialogTitle>
                     </DialogHeader>
-                    <div className="space-y-2">
-                      <Label htmlFor="admin-code">Admin Access Code</Label>
-                      <Input
-                        id="admin-code"
-                        type="password"
-                        placeholder="Enter admin code"
-                        value={adminCode}
-                        onChange={(event) => setAdminCode(event.target.value)}
-                      />
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="admin-name">Admin Name</Label>
+                        <Input
+                          id="admin-name"
+                          placeholder="Enter admin name"
+                          value={adminName}
+                          onChange={(event) => setAdminName(event.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="admin-password">Password</Label>
+                        <Input
+                          id="admin-password"
+                          type="password"
+                          placeholder="Enter password"
+                          value={adminPassword}
+                          onChange={(event) => setAdminPassword(event.target.value)}
+                        />
+                      </div>
                     </div>
                     <DialogFooter>
                       <Button
                         onClick={() => {
-                          if (adminCode.trim() === "admin123") {
+                          if (adminName.trim() === "ADadmin" && adminPassword === "123Admin") {
                             setIsAdmin(true);
                           }
                         }}
