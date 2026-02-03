@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
-import { useToast } from "@/hooks/use-toast";
 import { Sparkles, Users, Calendar, Award, ArrowRight, Mail, Phone, MapPin, ShieldCheck } from "lucide-react";
 import heroImage from "@assets/stock_images/luxury_indian_weddin_6c287dfd.jpg";
 import weddingImage from "@assets/stock_images/indian_wedding_cerem_96f31f4b.jpg";
@@ -13,8 +12,6 @@ import privateImage from "@assets/stock_images/indian_party_celebra_c1fa1c78.jpg
 import type { Event } from "@shared/schema";
 
 export default function Landing() {
-  const { toast } = useToast();
-
   const { data: featuredEvents = [] } = useQuery<Event[]>({
     queryKey: ["/api/events/featured"],
   });
@@ -271,35 +268,30 @@ export default function Landing() {
                 </div>
               </div>
             </div>
-            <Card data-testid="card-contact-form">
+            <Card data-testid="card-contact-highlights">
               <CardContent className="p-8">
-                <div className="space-y-5">
+                <div className="space-y-6">
                   <div>
-                    <h3 className="text-2xl font-semibold text-foreground mb-2">Need a personal consultation?</h3>
+                    <h3 className="text-2xl font-semibold text-foreground mb-2">Plan your event in minutes</h3>
                     <p className="text-muted-foreground">
-                      Our planners are happy to walk you through custom themes, vendor suggestions, and timelines.
+                      Use the estimator to understand budget ranges, then switch to booking when you are ready to lock a date.
                     </p>
                   </div>
-                  <div className="rounded-lg border bg-muted/40 p-5">
-                    <p className="text-sm uppercase tracking-wide text-muted-foreground mb-2">
-                      Quick Contact
+                  <div className="rounded-lg border bg-muted/40 p-5 space-y-3">
+                    <p className="text-sm uppercase tracking-wide text-muted-foreground">
+                      Quick Actions
                     </p>
-                    <p className="text-lg font-medium text-foreground">+91 98765 43210</p>
-                    <p className="text-muted-foreground">contact@finesthospitality.in</p>
+                    <Button asChild className="w-full" data-testid="button-contact-estimate">
+                      <Link href="/event-planner">Estimate Event Budget</Link>
+                    </Button>
+                    <Button asChild variant="outline" className="w-full" data-testid="button-contact-book">
+                      <Link href="/event-planner#booking">Book Your Date</Link>
+                    </Button>
                   </div>
-                  <Button
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => {
-                      toast({
-                        title: "We'll reach out shortly",
-                        description: "Our team will contact you within 24 hours to discuss details.",
-                      });
-                    }}
-                    data-testid="button-request-callback"
-                  >
-                    Request a Call Back
-                  </Button>
+                  <div className="text-sm text-muted-foreground">
+                    Need a personal consultation? Reach us at <span className="font-medium text-foreground">+91 98765 43210</span> or{" "}
+                    <span className="font-medium text-foreground">contact@finesthospitality.in</span>.
+                  </div>
                 </div>
               </CardContent>
             </Card>
