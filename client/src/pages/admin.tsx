@@ -8,6 +8,11 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Shield } from "lucide-react";
 
 export default function Admin() {
+  const cleanText = (value: unknown) => {
+    if (value == null) return "";
+    return String(value).replace(/[`*_>#•]/g, "").replace(/\s+/g, " ").trim();
+  };
+
   const [adminUser, setAdminUser] = useState("");
   const [adminPass, setAdminPass] = useState("");
   const [adminToken, setAdminToken] = useState<string | null>(
@@ -102,11 +107,11 @@ export default function Admin() {
                     <div key={b.id} className="border rounded-lg p-4">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="font-medium">{b.name} • {b.eventType}</p>
+                          <p className="font-medium">{cleanText(b.name)} • {cleanText(b.eventType)}</p>
                           <p className="text-sm text-muted-foreground">
-                            {b.date} • {b.location} • {b.guests} guests • {b.decor}
+                            {cleanText(b.date)} • {cleanText(b.location)} • {cleanText(b.guests)} guests • {cleanText(b.decor)}
                           </p>
-                          <p className="text-sm text-muted-foreground">{b.email}</p>
+                          <p className="text-sm text-muted-foreground">{cleanText(b.email)}</p>
                         </div>
                         <Badge
                           className={
@@ -117,7 +122,7 @@ export default function Admin() {
                               : "bg-amber-500 text-white"
                           }
                         >
-                          {b.status}
+                          {cleanText(b.status)}
                         </Badge>
                       </div>
                       {b.status === "pending" && (

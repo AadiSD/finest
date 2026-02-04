@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 
 const navItems = [
   { href: "/portfolio", label: "Portfolio" },
+  { href: "/gallery", label: "Gallery" },
   { href: "/event-planner", label: "Event Planner" },
 ];
 

@@ -1,9 +1,23 @@
+import "dotenv/config";
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import path from "path";
 
 const app = express();
+
+if (process.env.NODE_ENV !== "production") {
+  const originalWarn = console.warn;
+  console.warn = (...args: unknown[]) => {
+    if (
+      typeof args[0] === "string" &&
+      args[0].includes("A PostCSS plugin did not pass the `from` option")
+    ) {
+      return;
+    }
+    originalWarn(...(args as Parameters<typeof console.warn>));
+  };
+}
 
 declare module 'http' {
   interface IncomingMessage {

@@ -63,7 +63,7 @@ export const insertBookingSchema = z.object({
   name: z.string().min(1),
   email: z.string().email(),
   eventType: z.string().min(1),
-  guests: z.number().min(1),
+  guests: z.coerce.number().min(1),
   location: z.string().min(1),
   decor: z.string().min(1),
   date: z.string().min(1),

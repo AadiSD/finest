@@ -6,6 +6,9 @@ import {
   type BookingRequest,
   type InsertBooking,
 } from "@shared/schema";
+import { db } from "./db";
+import { bookings as bookingsTable } from "@shared/db-schema";
+import { desc, eq } from "drizzle-orm";
 
 // Interface for storage operations
 export interface IStorage {
@@ -183,6 +186,16 @@ export class MemStorage implements IStorage {
   ];
 
   private bookings: BookingRequest[] = [];
+  private dbUnavailableLogged = false;
+
+  private logDbFallback(error: unknown) {
+    if (this.dbUnavailableLogged) return;
+    this.dbUnavailableLogged = true;
+    console.warn("[storage] Database unavailable, falling back to in-memory bookings.");
+    if (error instanceof Error) {
+      console.warn("[storage] DB error:", error.message);
+    }
+  }
 
   // Event operations
   async getAllEvents(): Promise<Event[]> {
@@ -209,10 +222,60 @@ export class MemStorage implements IStorage {
 
   // Booking operations
   async getBookings(): Promise<BookingRequest[]> {
+    if (db) {
+      try {
+        const rows = await db.select().from(bookingsTable).orderBy(desc(bookingsTable.createdAt));
+        return rows.map((row) => ({
+          id: row.id.toString(),
+          name: row.name,
+          email: row.email,
+          eventType: row.eventType,
+          guests: row.guests,
+          location: row.location,
+          decor: row.decor,
+          date: row.date,
+          status: row.status as BookingRequest["status"],
+          createdAt: row.createdAt,
+        }));
+      } catch (error) {
+        this.logDbFallback(error);
+      }
+    }
     return this.bookings;
   }
 
   async createBooking(data: InsertBooking): Promise<BookingRequest> {
+    if (db) {
+      try {
+        const [row] = await db
+          .insert(bookingsTable)
+          .values({
+            name: data.name,
+            email: data.email,
+            eventType: data.eventType,
+            guests: data.guests,
+            location: data.location,
+            decor: data.decor,
+            date: data.date,
+            status: "pending",
+          })
+          .returning();
+        return {
+          id: row.id.toString(),
+          name: row.name,
+          email: row.email,
+          eventType: row.eventType,
+          guests: row.guests,
+          location: row.location,
+          decor: row.decor,
+          date: row.date,
+          status: row.status as BookingRequest["status"],
+          createdAt: row.createdAt,
+        };
+      } catch (error) {
+        this.logDbFallback(error);
+      }
+    }
     const booking: BookingRequest = {
       id: Math.random().toString(36).substring(7),
       ...data,
@@ -224,14 +287,51 @@ export class MemStorage implements IStorage {
   }
 
   async updateBookingStatus(id: string, status: "accepted" | "rejected"): Promise<BookingRequest | undefined> {
-    const booking = this.bookings.find(b => b.id === id);
+    if (db) {
+      const numericId = Number.parseInt(id, 10);
+      if (Number.isNaN(numericId)) return undefined;
+      try {
+        const [row] = await db
+          .update(bookingsTable)
+          .set({ status })
+          .where(eq(bookingsTable.id, numericId))
+          .returning();
+        if (!row) return undefined;
+        return {
+          id: row.id.toString(),
+          name: row.name,
+          email: row.email,
+          eventType: row.eventType,
+          guests: row.guests,
+          location: row.location,
+          decor: row.decor,
+          date: row.date,
+          status: row.status as BookingRequest["status"],
+          createdAt: row.createdAt,
+        };
+      } catch (error) {
+        this.logDbFallback(error);
+      }
+    }
+    const booking = this.bookings.find((b) => b.id === id);
     if (!booking) return undefined;
     booking.status = status;
     return booking;
   }
 
   async getBlockedDates(): Promise<string[]> {
-    return this.bookings.filter(b => b.status === "accepted").map(b => b.date);
+    if (db) {
+      try {
+        const rows = await db
+          .select({ date: bookingsTable.date })
+          .from(bookingsTable)
+          .where(eq(bookingsTable.status, "accepted"));
+        return rows.map((row) => row.date);
+      } catch (error) {
+        this.logDbFallback(error);
+      }
+    }
+    return this.bookings.filter((b) => b.status === "accepted").map((b) => b.date);
   }
 }
 

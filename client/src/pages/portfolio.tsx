@@ -78,7 +78,8 @@ export default function Portfolio() {
                       alt={event.title}
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                  <div className="absolute inset-0 bg-black/35" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent" />
                     <div className="absolute bottom-0 left-0 right-0 p-6">
                       <Badge className="mb-3" data-testid={`portfolio-badge-${event.id}`}>
                         {event.category}
@@ -92,7 +93,7 @@ export default function Portfolio() {
                       {event.eventDate && (
                         <p className="text-sm text-white/70">{event.eventDate}</p>
                       )}
-                      <p className="text-white/90 mt-3 line-clamp-3">{event.description}</p>
+                      <p className="text-white/90 mt-3 line-clamp-6">{event.description}</p>
                     </div>
                   </div>
                 </Card>

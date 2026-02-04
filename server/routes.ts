@@ -3,11 +3,14 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertInquirySchema, insertBookingSchema } from "@shared/schema";
 import { Resend } from "resend";
-import OpenAI from "openai";
 
 const adminUser = process.env.ADMIN_USERNAME || "ADadmin";
 const adminPass = process.env.ADMIN_PASSWORD || "123Admin";
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const geminiApiKey = process.env.GEMINI_API_KEY;
+const geminiModel = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+if (!geminiApiKey) {
+  console.warn("[startup] GEMINI_API_KEY is not set. Chatbot will fail until configured.");
+}
 
 function isAdmin(req: any) {
   const auth = req.headers.authorization;
@@ -144,23 +147,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post("/api/chat", async (req, res) => {
-    if (!process.env.OPENAI_API_KEY) {
-      return res.status(500).json({ message: "OPENAI_API_KEY not configured" });
+    if (!geminiApiKey) {
+      return res.status(500).json({ message: "GEMINI_API_KEY not configured" });
     }
 
     try {
+      const events = await storage.getAllEvents();
+      const eventSummaries = events
+        .map((e) => `- ${e.title} (${e.category})${e.location ? `, ${e.location}` : ""}${e.eventDate ? `, ${e.eventDate}` : ""}`)
+        .join("\n");
+
       const { messages = [] } = req.body || {};
       const transcript = Array.isArray(messages)
         ? messages.map((m: any) => `${m.role}: ${m.content}`).join("\n")
         : "";
 
-      const response = await openai.responses.create({
-        model: "gpt-4o-mini",
-        input: `You are the Blessed Hospitality assistant. Be concise and helpful.\n\n${transcript}`,
-        max_output_tokens: 300,
+      const blockedDates = await storage.getBlockedDates();
+      const blockedList = blockedDates.length ? blockedDates.join(", ") : "None";
+
+      const prompt = `You are the Blessed Hospitality assistant for an event management portfolio site.
+Use only the company details below. If a user asks something not covered, say you can help connect them with the team.
+Respond in 2-4 short sentences. No markdown, no bullet symbols, no emojis.
+
+Company offerings:
+Services: Indian Weddings, Corporate Events, Sangeet & Mehendi, Destination Weddings
+Locations: Mumbai, Pune, Delhi
+Packages (guests): Up to 100, Up to 500, Up to 1000
+Decoration types: Simple, Intermediate, Premium
+Unavailable dates (already booked): ${blockedList}
+
+Portfolio events:
+${eventSummaries}
+
+Conversation:
+${transcript}`;
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent`;
+      const geminiRes = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-goog-api-key": geminiApiKey,
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              role: "user",
+              parts: [{ text: prompt }],
+            },
+          ],
+        }),
       });
 
-      const reply = response.output_text || "Sorry, I couldn't generate a reply.";
+      if (!geminiRes.ok) {
+        const text = await geminiRes.text();
+        console.error("Chat error:", text);
+        return res.status(500).json({ message: "Chat failed" });
+      }
+
+      const data = await geminiRes.json();
+      const rawReply =
+        data?.candidates?.[0]?.content?.parts?.[0]?.text ||
+        "Sorry, I couldn't generate a reply.";
+      const reply = rawReply
+        .replace(/^\s*[-*•]\s+/gm, "")
+        .replace(/[`*_>#]/g, "")
+        .trim();
       res.json({ reply });
     } catch (err: any) {
       console.error("Chat error:", err);

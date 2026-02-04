@@ -60,7 +60,7 @@ export default function EventPlanner() {
   const [bookPackage, setBookPackage] = useState("100");
   const [bookLocation, setBookLocation] = useState("Mumbai");
   const [bookDecor, setBookDecor] = useState("Simple");
-  const [bookDate, setBookDate] = useState<Date | undefined>(addDays(new Date(), 10));
+  const [bookDate, setBookDate] = useState<Date | undefined>(undefined);
 
   const { data: blockedDates = [] } = useQuery<string[]>({
     queryKey: ["/api/bookings/blocked-dates"],

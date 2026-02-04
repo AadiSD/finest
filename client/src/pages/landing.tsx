@@ -319,6 +319,11 @@ export default function Landing() {
                   </Link>
                 </li>
                 <li>
+                  <Link href="/gallery" className="hover:text-foreground transition-colors">
+                    Gallery
+                  </Link>
+                </li>
+                <li>
                   <Link href="/event-planner" className="hover:text-foreground transition-colors">
                     Event Planner
                   </Link>
