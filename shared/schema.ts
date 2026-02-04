@@ -44,3 +44,29 @@ export const insertInquirySchema = z.object({
 });
 
 export type InsertInquiry = z.infer<typeof insertInquirySchema>;
+
+// Booking type
+export interface BookingRequest {
+  id: string;
+  name: string;
+  email: string;
+  eventType: string;
+  guests: number;
+  location: string;
+  decor: string;
+  date: string;
+  status: "pending" | "accepted" | "rejected";
+  createdAt: Date;
+}
+
+export const insertBookingSchema = z.object({
+  name: z.string().min(1),
+  email: z.string().email(),
+  eventType: z.string().min(1),
+  guests: z.number().min(1),
+  location: z.string().min(1),
+  decor: z.string().min(1),
+  date: z.string().min(1),
+});
+
+export type InsertBooking = z.infer<typeof insertBookingSchema>;

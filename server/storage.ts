@@ -3,6 +3,8 @@ import {
   type InsertEvent,
   type Inquiry,
   type InsertInquiry,
+  type BookingRequest,
+  type InsertBooking,
 } from "@shared/schema";
 
 // Interface for storage operations
@@ -12,8 +14,14 @@ export interface IStorage {
   getFeaturedEvents(): Promise<Event[]>;
   getEventById(id: string): Promise<Event | undefined>;
 
-  // Inquiry operations (now just for logging)
+  // Inquiry operations
   createInquiry(inquiry: InsertInquiry): Promise<Inquiry>;
+
+  // Booking operations
+  getBookings(): Promise<BookingRequest[]>;
+  createBooking(request: InsertBooking): Promise<BookingRequest>;
+  updateBookingStatus(id: string, status: "accepted" | "rejected"): Promise<BookingRequest | undefined>;
+  getBlockedDates(): Promise<string[]>;
 }
 
 export class MemStorage implements IStorage {
@@ -174,6 +182,8 @@ export class MemStorage implements IStorage {
     },
   ];
 
+  private bookings: BookingRequest[] = [];
+
   // Event operations
   async getAllEvents(): Promise<Event[]> {
     return this.events;
@@ -187,15 +197,41 @@ export class MemStorage implements IStorage {
     return this.events.find(event => event.id === id);
   }
 
-  // Inquiry operations - will be handled by email
+  // Inquiry operations
   async createInquiry(inquiryData: InsertInquiry): Promise<Inquiry> {
     const inquiry: Inquiry = {
       id: Math.random().toString(36).substring(7),
       ...inquiryData,
       createdAt: new Date(),
     };
-    // Email sending will be handled in routes
     return inquiry;
+  }
+
+  // Booking operations
+  async getBookings(): Promise<BookingRequest[]> {
+    return this.bookings;
+  }
+
+  async createBooking(data: InsertBooking): Promise<BookingRequest> {
+    const booking: BookingRequest = {
+      id: Math.random().toString(36).substring(7),
+      ...data,
+      status: "pending",
+      createdAt: new Date(),
+    };
+    this.bookings.unshift(booking);
+    return booking;
+  }
+
+  async updateBookingStatus(id: string, status: "accepted" | "rejected"): Promise<BookingRequest | undefined> {
+    const booking = this.bookings.find(b => b.id === id);
+    if (!booking) return undefined;
+    booking.status = status;
+    return booking;
+  }
+
+  async getBlockedDates(): Promise<string[]> {
+    return this.bookings.filter(b => b.status === "accepted").map(b => b.date);
   }
 }
 

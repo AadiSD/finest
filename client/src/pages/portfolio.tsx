@@ -21,21 +21,17 @@ export default function Portfolio() {
     : events.filter(event => event.category.toLowerCase() === selectedCategory.toLowerCase());
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b sticky top-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-50">
-        <div className="max-w-7xl mx-auto px-6 md:px-12 lg:px-20 py-4">
-          <Button variant="ghost" asChild data-testid="button-back-home">
-            <Link href="/">
-              <ArrowLeft className="h-5 w-5 mr-2" />
-              Back to Home
-            </Link>
-          </Button>
-        </div>
-      </header>
+    <div className="min-h-screen bg-background pt-24">
+      <div className="max-w-7xl mx-auto px-6 md:px-12 lg:px-20">
+        <Button variant="ghost" asChild data-testid="button-back-home">
+          <Link href="/">
+            <ArrowLeft className="h-5 w-5 mr-2" />
+            Back to Home
+          </Link>
+        </Button>
+      </div>
 
-      {/* Portfolio Content */}
-      <div className="py-20 px-6 md:px-12 lg:px-20">
+      <div className="py-16 px-6 md:px-12 lg:px-20">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12">
             <h1 className="text-5xl md:text-6xl font-bold mb-6">Our Portfolio</h1>
@@ -44,7 +40,6 @@ export default function Portfolio() {
             </p>
           </div>
 
-          {/* Filter Pills */}
           <div className="flex flex-wrap gap-3 justify-center mb-12" data-testid="filter-bar">
             {categories.map((category) => (
               <Button
@@ -59,7 +54,6 @@ export default function Portfolio() {
             ))}
           </div>
 
-          {/* Portfolio Grid */}
           {isLoading ? (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
               {[...Array(6)].map((_, i) => (

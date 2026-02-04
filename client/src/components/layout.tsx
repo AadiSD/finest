@@ -1,13 +1,12 @@
-import { ThemeToggle } from "@/components/theme-toggle";
+import { SiteHeader } from "@/components/site-header";
+import { Chatbot } from "@/components/chatbot";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
     <div className="relative min-h-screen">
-      {/* Global Theme Toggle - Fixed Position */}
-      <div className="fixed top-6 right-6 z-50">
-        <ThemeToggle />
-      </div>
+      <SiteHeader />
       {children}
+      <Chatbot />
     </div>
   );
 }

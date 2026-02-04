@@ -2,66 +2,19 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { insertInquirySchema, type InsertInquiry } from "@shared/schema";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { apiRequest, queryClient } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
+import { useQuery } from "@tanstack/react-query";
 import { Sparkles, Users, Calendar, Award, ArrowRight, Mail, Phone, MapPin } from "lucide-react";
 import heroImage from "@assets/stock_images/luxury_indian_weddin_6c287dfd.jpg";
 import weddingImage from "@assets/stock_images/indian_wedding_cerem_96f31f4b.jpg";
 import corporateImage from "@assets/stock_images/mumbai_corporate_eve_851a13ca.jpg";
 import destinationImage from "@assets/stock_images/goa_beach_wedding_de_8c4c5f5b.jpg";
 import privateImage from "@assets/stock_images/indian_party_celebra_c1fa1c78.jpg";
-import detailImage from "@assets/stock_images/indian_festival_cele_f3e1876a.jpg";
 import type { Event } from "@shared/schema";
 
 export default function Landing() {
-  const { toast } = useToast();
-
   const { data: featuredEvents = [] } = useQuery<Event[]>({
     queryKey: ["/api/events/featured"],
   });
-
-  const form = useForm<InsertInquiry>({
-    resolver: zodResolver(insertInquirySchema),
-    defaultValues: {
-      name: "",
-      email: "",
-      eventType: "",
-      message: "",
-    },
-  });
-
-  const inquiryMutation = useMutation({
-    mutationFn: async (data: InsertInquiry) => {
-      return await apiRequest("POST", "/api/inquiries", data);
-    },
-    onSuccess: () => {
-      toast({
-        title: "Inquiry Sent",
-        description: "Thank you! We'll get back to you soon.",
-      });
-      form.reset();
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to send inquiry",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const onSubmit = (data: InsertInquiry) => {
-    inquiryMutation.mutate(data);
-  };
 
   return (
     <div className="min-h-screen">
@@ -77,7 +30,7 @@ export default function Landing() {
         </div>
         <div className="relative z-10 text-center px-6 max-w-5xl mx-auto">
           <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold text-white mb-6 leading-tight">
-            Finest Hospitality
+            Blessed Hospitality
           </h1>
           <p className="text-xl md:text-2xl text-white/90 mb-8 leading-relaxed">
             Creating Magical Celebrations Across India
@@ -99,7 +52,7 @@ export default function Landing() {
               size="lg"
               className="text-lg px-8 bg-background/10 backdrop-blur-md border-white/30 text-white hover:bg-background/20"
               onClick={() => {
-                document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' });
+                document.getElementById("contact")?.scrollIntoView({ behavior: "smooth" });
               }}
               data-testid="button-get-in-touch"
             >
@@ -121,7 +74,7 @@ export default function Landing() {
                 India's Premier Event Planners
               </h2>
               <p className="text-lg leading-relaxed text-muted-foreground mb-6">
-                For over a decade, Finest Hospitality has been India's premier choice for crafting extraordinary celebrations. From grand Indian weddings to corporate galas, we blend traditional elegance with modern sophistication to create unforgettable experiences.
+                For over a decade, Blessed Hospitality has been India's premier choice for crafting extraordinary celebrations. From grand Indian weddings to corporate galas, we blend traditional elegance with modern sophistication to create unforgettable experiences.
               </p>
               <p className="text-lg leading-relaxed text-muted-foreground">
                 Our passionate team specializes in authentic Indian celebrations, destination weddings, and corporate events across major cities including Mumbai, Delhi, Bangalore, and beyond. We honor traditions while embracing innovation.
@@ -205,6 +158,42 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* Gallery Section */}
+      <section id="gallery" className="py-20 md:py-32 px-6 md:px-12 lg:px-20 bg-background">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-semibold mb-4 text-foreground">
+              Gallery Highlights
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              A quick look at our recent celebrations. View full details in the portfolio.
+            </p>
+          </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {featuredEvents.slice(0, 6).map((event) => (
+              <Link key={event.id} href="/portfolio" className="group">
+                <div className="relative overflow-hidden rounded-xl border bg-card">
+                  <img
+                    src={event.imageUrl}
+                    alt={event.title}
+                    className="w-full h-56 object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                  <div className="p-4">
+                    <p className="text-sm text-muted-foreground">{event.category}</p>
+                    <p className="font-medium text-foreground">{event.title}</p>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+          <div className="text-center mt-10">
+            <Button variant="outline" asChild>
+              <Link href="/portfolio">View Full Portfolio</Link>
+            </Button>
+          </div>
+        </div>
+      </section>
+
       {/* Services Section */}
       <section className="py-20 md:py-32 px-6 md:px-12 lg:px-20 bg-background">
         <div className="max-w-7xl mx-auto">
@@ -274,7 +263,7 @@ export default function Landing() {
                 Let's Create Magic Together
               </h2>
               <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
-                Ready to plan your dream celebration? Contact us today and let's transform your vision into an unforgettable Indian experience filled with joy, tradition, and elegance.
+                Ready to plan your dream celebration? Use our estimator or book your date instantly.
               </p>
               <div className="space-y-4">
                 <div className="flex items-center gap-3 text-muted-foreground">
@@ -291,88 +280,20 @@ export default function Landing() {
                 </div>
               </div>
             </div>
-            <Card data-testid="card-contact-form">
+            <Card>
               <CardContent className="p-8">
-                <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                    <FormField
-                      control={form.control}
-                      name="name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Name</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Your name" {...field} data-testid="input-name" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="email"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Email</FormLabel>
-                          <FormControl>
-                            <Input type="email" placeholder="your@email.com" {...field} data-testid="input-email" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="eventType"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Event Type</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger data-testid="select-event-type">
-                                <SelectValue placeholder="Select event type" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="wedding">Wedding</SelectItem>
-                              <SelectItem value="corporate">Corporate Event</SelectItem>
-                              <SelectItem value="private">Private Party</SelectItem>
-                              <SelectItem value="destination">Destination Event</SelectItem>
-                              <SelectItem value="other">Other</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="message"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Message</FormLabel>
-                          <FormControl>
-                            <Textarea
-                              placeholder="Tell us about your event..."
-                              className="resize-none min-h-[120px]"
-                              {...field}
-                              data-testid="textarea-message"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <Button
-                      type="submit"
-                      className="w-full"
-                      disabled={inquiryMutation.isPending}
-                      data-testid="button-send-inquiry"
-                    >
-                      {inquiryMutation.isPending ? "Sending..." : "Send Inquiry"}
-                    </Button>
-                  </form>
-                </Form>
+                <h3 className="text-xl font-semibold mb-4">Plan your event in minutes</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Use our estimator to understand budget ranges, then switch to booking.
+                </p>
+                <div className="space-y-3">
+                  <Button asChild className="w-full">
+                    <Link href="/event-planner">Estimate Event Budget</Link>
+                  </Button>
+                  <Button asChild variant="outline" className="w-full">
+                    <Link href="/event-planner">Book Your Date</Link>
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </div>
@@ -384,7 +305,7 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto">
           <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-8 mb-12">
             <div>
-              <h3 className="text-xl font-serif font-semibold mb-4">Finest Hospitality</h3>
+            <h3 className="text-xl font-serif font-semibold mb-4">Blessed Hospitality</h3>
               <p className="text-sm text-muted-foreground">
                 Creating magical Indian celebrations for over a decade
               </p>
@@ -398,19 +319,14 @@ export default function Landing() {
                   </Link>
                 </li>
                 <li>
-                  <button
-                    onClick={() => {
-                      document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' });
-                    }}
-                    className="hover:text-foreground transition-colors"
-                  >
-                    Contact
-                  </button>
+                  <Link href="/event-planner" className="hover:text-foreground transition-colors">
+                    Event Planner
+                  </Link>
                 </li>
                 <li>
-                  <a href="/api/login" className="hover:text-foreground transition-colors cursor-pointer" data-testid="link-login">
-                    Login
-                  </a>
+                  <Link href="/admin" className="hover:text-foreground transition-colors">
+                    Admin Access
+                  </Link>
                 </li>
               </ul>
             </div>
@@ -433,7 +349,7 @@ export default function Landing() {
             </div>
           </div>
           <div className="border-t pt-8 text-center text-sm text-muted-foreground">
-            <p>&copy; 2025 Finest Hospitality. All rights reserved.</p>
+            <p>&copy; 2025 Blessed Hospitality. All rights reserved.</p>
           </div>
         </div>
       </footer>
