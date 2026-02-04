@@ -11,6 +11,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { CalendarDays, ArrowLeft } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 const eventTypes = ["Wedding", "Corporate", "Private", "Destination"];
 const packages = [
@@ -47,6 +48,7 @@ function estimateCost({
 }
 
 export default function EventPlanner() {
+  const { toast } = useToast();
   const [tab, setTab] = useState<"estimate" | "book">("estimate");
   const [estimateType, setEstimateType] = useState("Wedding");
   const [estimatePackage, setEstimatePackage] = useState("100");
@@ -87,6 +89,10 @@ export default function EventPlanner() {
       await queryClient.invalidateQueries({ queryKey: ["/api/bookings/blocked-dates"] });
       setBookName("");
       setBookEmail("");
+      toast({
+        title: "Booking Request Sent",
+        description: "Thanks! We’ll review your request and confirm the date shortly.",
+      });
     },
   });
 
