@@ -1,10 +1,23 @@
 import "dotenv/config";
 import express, { type Request, Response, NextFunction } from "express";
+import session from "express-session";
+import createMemoryStore from "memorystore";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import path from "path";
 
 const app = express();
+const MemoryStore = createMemoryStore(session);
+const isProduction = process.env.NODE_ENV === "production";
+const sessionSecret = process.env.ADMIN_SESSION_SECRET || process.env.SESSION_SECRET || "finest-admin-session-secret";
+
+declare module "express-session" {
+  interface SessionData {
+    adminId?: string;
+    adminRole?: "super_admin" | "admin";
+    adminUsername?: string;
+  }
+}
 
 if (process.env.NODE_ENV !== "production") {
   const originalWarn = console.warn;
@@ -18,6 +31,28 @@ if (process.env.NODE_ENV !== "production") {
     originalWarn(...(args as Parameters<typeof console.warn>));
   };
 }
+
+if (isProduction) {
+  app.set("trust proxy", 1);
+}
+
+app.use(
+  session({
+    name: "fh_admin_session",
+    secret: sessionSecret,
+    resave: false,
+    saveUninitialized: false,
+    store: new MemoryStore({
+      checkPeriod: 24 * 60 * 60 * 1000,
+    }),
+    cookie: {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: isProduction,
+      maxAge: 12 * 60 * 60 * 1000,
+    },
+  }),
+);
 
 declare module 'http' {
   interface IncomingMessage {

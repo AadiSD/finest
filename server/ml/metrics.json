@@ -1,0 +1,17 @@
+{
+  "train": {
+    "mae": 14502.63,
+    "rmse": 17759.09,
+    "mape": 1.69,
+    "residualStdDev": 17759.09
+  },
+  "test": {
+    "mae": 14329.21,
+    "rmse": 17628.06,
+    "mape": 1.61,
+    "residualStdDev": 17628.06
+  },
+  "trainingRows": 720,
+  "testRows": 180,
+  "modelVersion": "synthetic-lr-v2"
+}

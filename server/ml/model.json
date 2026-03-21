@@ -1,0 +1,50 @@
+{
+  "modelVersion": "synthetic-lr-v2",
+  "currency": "INR",
+  "trainedAt": "2026-03-21T06:24:20.993Z",
+  "trainingRows": 720,
+  "featureList": [
+    "intercept",
+    "guests",
+    "month",
+    "is_weekend",
+    "eventType_Wedding",
+    "eventType_Destination",
+    "eventType_Corporate",
+    "eventType_Private",
+    "eventType_Other",
+    "location_Mumbai",
+    "location_Delhi",
+    "location_Pune",
+    "location_Other",
+    "decor_Simple",
+    "decor_Intermediate",
+    "decor_Premium",
+    "decor_Other"
+  ],
+  "coefficients": {
+    "intercept": 187858.9765625,
+    "guests": 1121.6283421992534,
+    "month": 79.59787601744756,
+    "is_weekend": 1653.4177916259796,
+    "eventType_Wedding": 58213.3203125,
+    "eventType_Destination": 99748.77734375,
+    "eventType_Corporate": 31164.279296875,
+    "eventType_Private": -1267.53125,
+    "eventType_Other": 0,
+    "location_Mumbai": 88976.076171875,
+    "location_Delhi": 64309.396484375,
+    "location_Pune": 34573.47265625,
+    "location_Other": 0,
+    "decor_Simple": 16911.8984375,
+    "decor_Intermediate": 60260.4765625,
+    "decor_Premium": 110686.4609375,
+    "decor_Other": 0
+  },
+  "residualStdDev": 17628.06,
+  "metrics": {
+    "mae": 14329.21,
+    "rmse": 17628.06,
+    "mape": 1.61
+  }
+}

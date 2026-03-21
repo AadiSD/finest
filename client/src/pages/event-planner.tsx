@@ -1,7 +1,7 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "wouter";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { addDays, format } from "date-fns";
+import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +12,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { CalendarDays, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import type { EstimatePrediction } from "@shared/schema";
 
 const eventTypes = ["Wedding", "Corporate", "Private", "Destination"];
 const packages = [
@@ -22,31 +23,6 @@ const packages = [
 const locations = ["Mumbai", "Pune", "Delhi"];
 const decorTypes = ["Simple", "Intermediate", "Premium"];
 
-function estimateCost({
-  eventType,
-  guests,
-  location,
-  decor,
-}: {
-  eventType: string;
-  guests: number;
-  location: string;
-  decor: string;
-}) {
-  const base =
-    eventType === "Wedding"
-      ? 280000
-      : eventType === "Destination"
-      ? 320000
-      : eventType === "Corporate"
-      ? 220000
-      : 180000;
-  const guestMultiplier = guests * 1200;
-  const locationMultiplier = location === "Mumbai" ? 1.2 : location === "Delhi" ? 1.1 : 1.0;
-  const decorMultiplier = decor === "Premium" ? 1.6 : decor === "Intermediate" ? 1.3 : 1.0;
-  return Math.round((base + guestMultiplier) * locationMultiplier * decorMultiplier);
-}
-
 export default function EventPlanner() {
   const { toast } = useToast();
   const [tab, setTab] = useState<"estimate" | "book">("estimate");
@@ -54,7 +30,9 @@ export default function EventPlanner() {
   const [estimatePackage, setEstimatePackage] = useState("100");
   const [estimateLocation, setEstimateLocation] = useState("Mumbai");
   const [estimateDecor, setEstimateDecor] = useState("Simple");
-  const [estimateResult, setEstimateResult] = useState<number | null>(null);
+  const [estimateResult, setEstimateResult] = useState<EstimatePrediction | null>(null);
+  const [estimateId, setEstimateId] = useState<string | null>(null);
+  const [estimateDate, setEstimateDate] = useState<Date | undefined>(undefined);
 
   const [bookName, setBookName] = useState("");
   const [bookEmail, setBookEmail] = useState("");
@@ -66,6 +44,15 @@ export default function EventPlanner() {
 
   const { data: blockedDates = [] } = useQuery<string[]>({
     queryKey: ["/api/bookings/blocked-dates"],
+  });
+
+  const { data: modelInfo } = useQuery<{
+    modelVersion: string;
+    trainedAt?: string;
+    trainingRows?: number;
+    metrics?: { mae: number; rmse: number; mape: number };
+  }>({
+    queryKey: ["/api/estimate/model-info"],
   });
 
   const disabledDays = useMemo(() => {
@@ -83,6 +70,7 @@ export default function EventPlanner() {
         location: bookLocation,
         decor: bookDecor,
         date: format(bookDate, "yyyy-MM-dd"),
+        estimateId: estimateId ?? undefined,
       });
     },
     onSuccess: async () => {
@@ -96,13 +84,31 @@ export default function EventPlanner() {
     },
   });
 
-  const estimation = useMemo(() => {
-    return estimateCost({
-      eventType: estimateType,
-      guests: Number(estimatePackage),
-      location: estimateLocation,
-      decor: estimateDecor,
-    });
+  const estimateMutation = useMutation({
+    mutationFn: async () => {
+      const dateValue = estimateDate ? format(estimateDate, "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd");
+      const res = await apiRequest("POST", "/api/estimate", {
+        eventType: estimateType,
+        guests: Number(estimatePackage),
+        location: estimateLocation,
+        decor: estimateDecor,
+        date: dateValue,
+      });
+      return res.json();
+    },
+    onSuccess: (data: EstimatePrediction) => {
+      setEstimateResult(data);
+      setEstimateId(data.id ?? null);
+    },
+    onError: () => {
+      setEstimateResult(null);
+      setEstimateId(null);
+    },
+  });
+
+  useEffect(() => {
+    setEstimateResult(null);
+    setEstimateId(null);
   }, [estimateType, estimatePackage, estimateLocation, estimateDecor]);
 
   return (
@@ -193,12 +199,42 @@ export default function EventPlanner() {
                     </SelectContent>
                   </Select>
                 </div>
+                <div className="md:col-span-2">
+                  <label className="text-sm font-medium">Event Date</label>
+                  <div className="mt-2">
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" className="w-full justify-start">
+                          <CalendarDays className="mr-2 h-4 w-4" />
+                          {estimateDate ? format(estimateDate, "PPP") : "Select date"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent align="start">
+                        <Calendar
+                          mode="single"
+                          selected={estimateDate}
+                          onSelect={setEstimateDate}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                </div>
               </div>
               <div className="mt-6 flex items-center gap-4">
-                <Button onClick={() => setEstimateResult(estimation)}>Estimate Cost</Button>
+                <Button onClick={() => estimateMutation.mutate()} disabled={estimateMutation.isPending}>
+                  {estimateMutation.isPending ? "Estimating..." : "Estimate Cost"}
+                </Button>
                 {estimateResult !== null && (
-                  <div className="text-lg font-semibold">
-                    Estimated: INR {estimateResult.toLocaleString("en-IN")}
+                  <div className="space-y-1">
+                    <div className="text-lg font-semibold">
+                      Estimated: {estimateResult.currency} {estimateResult.estimatedBudget.toLocaleString("en-IN")}
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      Range: {estimateResult.currency} {estimateResult.budgetLow.toLocaleString("en-IN")} - {estimateResult.currency} {estimateResult.budgetHigh.toLocaleString("en-IN")}
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      Model: {estimateResult.modelVersion} • Confidence: {estimateResult.confidenceLabel} ({Math.round(estimateResult.confidenceScore * 100)}%)
+                    </div>
                   </div>
                 )}
               </div>
@@ -294,7 +330,9 @@ export default function EventPlanner() {
         )}
 
         <div className="max-w-5xl mx-auto text-sm text-muted-foreground">
-          Admin actions are available on the Admin Login page.
+          Active model: {modelInfo?.modelVersion ?? "baseline-v1"}
+          {modelInfo?.metrics ? ` • MAE INR ${Math.round(modelInfo.metrics.mae).toLocaleString("en-IN")}` : ""}
+          {modelInfo?.trainingRows ? ` • Training rows ${modelInfo.trainingRows}` : ""}
         </div>
       </div>
     </div>

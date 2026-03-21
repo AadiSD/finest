@@ -3,12 +3,21 @@ import {
   type InsertEvent,
   type Inquiry,
   type InsertInquiry,
+  type AdminAccount,
+  type InsertAdmin,
   type BookingRequest,
   type InsertBooking,
+  type Estimate,
+  type EstimateRequest,
 } from "@shared/schema";
 import { db } from "./db";
-import { bookings as bookingsTable } from "@shared/db-schema";
-import { desc, eq } from "drizzle-orm";
+import { bookings as bookingsTable, estimates as estimatesTable, admins as adminsTable } from "@shared/db-schema";
+import { desc, eq, inArray } from "drizzle-orm";
+import { hashPassword, verifyPassword } from "./admin-auth";
+
+type StoredAdmin = AdminAccount & {
+  passwordHash: string;
+};
 
 // Interface for storage operations
 export interface IStorage {
@@ -25,6 +34,20 @@ export interface IStorage {
   createBooking(request: InsertBooking): Promise<BookingRequest>;
   updateBookingStatus(id: string, status: "accepted" | "rejected"): Promise<BookingRequest | undefined>;
   getBlockedDates(): Promise<string[]>;
+
+  // Estimate operations
+  getEstimates(): Promise<Estimate[]>;
+  createEstimate(request: EstimateRequest & { estimatedBudget: number; currency: string; modelVersion: string; source: "estimate" | "booking"; bookingId?: string | null }): Promise<Estimate>;
+  updateEstimateBooking(id: string, bookingId: string): Promise<Estimate | undefined>;
+  updateEstimateFinalBudget(bookingId: string, finalBudget: number): Promise<Estimate | undefined>;
+
+  // Admin operations
+  upsertDefaultSuperAdmin(username: string, password: string): Promise<AdminAccount>;
+  authenticateAdmin(username: string, password: string): Promise<AdminAccount | undefined>;
+  getAdmins(): Promise<AdminAccount[]>;
+  getAdminById(id: string): Promise<AdminAccount | undefined>;
+  createAdmin(admin: InsertAdmin): Promise<AdminAccount>;
+  deleteAdmin(id: string): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
@@ -186,15 +209,27 @@ export class MemStorage implements IStorage {
   ];
 
   private bookings: BookingRequest[] = [];
+  private estimates: Estimate[] = [];
+  private admins: StoredAdmin[] = [];
   private dbUnavailableLogged = false;
 
   private logDbFallback(error: unknown) {
     if (this.dbUnavailableLogged) return;
     this.dbUnavailableLogged = true;
-    console.warn("[storage] Database unavailable, falling back to in-memory bookings.");
+    console.warn("[storage] Database unavailable, falling back to in-memory storage.");
     if (error instanceof Error) {
       console.warn("[storage] DB error:", error.message);
     }
+  }
+
+  private toAdminAccount(admin: StoredAdmin): AdminAccount {
+    return {
+      id: admin.id,
+      username: admin.username,
+      role: admin.role,
+      isDefault: admin.isDefault,
+      createdAt: admin.createdAt,
+    };
   }
 
   // Event operations
@@ -225,6 +260,19 @@ export class MemStorage implements IStorage {
     if (db) {
       try {
         const rows = await db.select().from(bookingsTable).orderBy(desc(bookingsTable.createdAt));
+        const bookingIds = rows.map((row) => row.id);
+        const estimatesByBookingId = new Map<number, typeof estimatesTable.$inferSelect>();
+        if (bookingIds.length) {
+          const estimateRows = await db
+            .select()
+            .from(estimatesTable)
+            .where(inArray(estimatesTable.bookingId, bookingIds));
+          estimateRows.forEach((row) => {
+            if (row.bookingId != null) {
+              estimatesByBookingId.set(row.bookingId, row);
+            }
+          });
+        }
         return rows.map((row) => ({
           id: row.id.toString(),
           name: row.name,
@@ -235,13 +283,28 @@ export class MemStorage implements IStorage {
           decor: row.decor,
           date: row.date,
           status: row.status as BookingRequest["status"],
+          estimateId: estimatesByBookingId.get(row.id)?.id?.toString() ?? null,
+          estimatedBudget: estimatesByBookingId.get(row.id)?.estimatedBudget ?? null,
+          finalBudget: estimatesByBookingId.get(row.id)?.finalBudget ?? null,
+          currency: estimatesByBookingId.get(row.id)?.currency ?? null,
+          modelVersion: estimatesByBookingId.get(row.id)?.modelVersion ?? null,
           createdAt: row.createdAt,
         }));
       } catch (error) {
         this.logDbFallback(error);
       }
     }
-    return this.bookings;
+    return this.bookings.map((booking) => {
+      const estimate = this.estimates.find((e) => e.bookingId === booking.id);
+      return {
+        ...booking,
+        estimateId: estimate?.id ?? null,
+        estimatedBudget: estimate?.estimatedBudget ?? null,
+        finalBudget: estimate?.finalBudget ?? null,
+        currency: estimate?.currency ?? null,
+        modelVersion: estimate?.modelVersion ?? null,
+      };
+    });
   }
 
   async createBooking(data: InsertBooking): Promise<BookingRequest> {
@@ -332,6 +395,393 @@ export class MemStorage implements IStorage {
       }
     }
     return this.bookings.filter((b) => b.status === "accepted").map((b) => b.date);
+  }
+
+  async createEstimate(data: EstimateRequest & { estimatedBudget: number; currency: string; modelVersion: string; source: "estimate" | "booking"; bookingId?: string | null }): Promise<Estimate> {
+    if (db) {
+      try {
+        const [row] = await db
+          .insert(estimatesTable)
+          .values({
+            eventType: data.eventType,
+            guests: data.guests,
+            location: data.location,
+            decor: data.decor,
+            date: data.date,
+            estimatedBudget: data.estimatedBudget,
+            currency: data.currency,
+            modelVersion: data.modelVersion,
+            source: data.source,
+            bookingId: data.bookingId ? Number.parseInt(data.bookingId, 10) : null,
+          })
+          .returning();
+        return {
+          id: row.id.toString(),
+          eventType: row.eventType,
+          guests: row.guests,
+          location: row.location,
+          decor: row.decor,
+          date: row.date,
+          estimatedBudget: row.estimatedBudget,
+          finalBudget: row.finalBudget ?? null,
+          currency: row.currency,
+          modelVersion: row.modelVersion,
+          source: row.source as Estimate["source"],
+          bookingId: row.bookingId ? row.bookingId.toString() : null,
+          createdAt: row.createdAt,
+        };
+      } catch (error) {
+        this.logDbFallback(error);
+      }
+    }
+    const estimate: Estimate = {
+      id: Math.random().toString(36).substring(7),
+      eventType: data.eventType,
+      guests: data.guests,
+      location: data.location,
+      decor: data.decor,
+      date: data.date,
+      estimatedBudget: data.estimatedBudget,
+      finalBudget: null,
+      currency: data.currency,
+      modelVersion: data.modelVersion,
+      source: data.source,
+      bookingId: data.bookingId ?? null,
+      createdAt: new Date(),
+    };
+    this.estimates.unshift(estimate);
+    return estimate;
+  }
+
+  async getEstimates(): Promise<Estimate[]> {
+    if (db) {
+      try {
+        const rows = await db.select().from(estimatesTable).orderBy(desc(estimatesTable.createdAt));
+        return rows.map((row) => ({
+          id: row.id.toString(),
+          eventType: row.eventType,
+          guests: row.guests,
+          location: row.location,
+          decor: row.decor,
+          date: row.date,
+          estimatedBudget: row.estimatedBudget,
+          finalBudget: row.finalBudget ?? null,
+          currency: row.currency,
+          modelVersion: row.modelVersion,
+          source: row.source as Estimate["source"],
+          bookingId: row.bookingId ? row.bookingId.toString() : null,
+          createdAt: row.createdAt,
+        }));
+      } catch (error) {
+        this.logDbFallback(error);
+      }
+    }
+    return [...this.estimates];
+  }
+
+  async updateEstimateBooking(id: string, bookingId: string): Promise<Estimate | undefined> {
+    if (db) {
+      const numericId = Number.parseInt(id, 10);
+      const numericBookingId = Number.parseInt(bookingId, 10);
+      if (Number.isNaN(numericId) || Number.isNaN(numericBookingId)) return undefined;
+      try {
+        const [row] = await db
+          .update(estimatesTable)
+          .set({ bookingId: numericBookingId })
+          .where(eq(estimatesTable.id, numericId))
+          .returning();
+        if (!row) return undefined;
+        return {
+          id: row.id.toString(),
+          eventType: row.eventType,
+          guests: row.guests,
+          location: row.location,
+          decor: row.decor,
+          date: row.date,
+          estimatedBudget: row.estimatedBudget,
+          finalBudget: row.finalBudget ?? null,
+          currency: row.currency,
+          modelVersion: row.modelVersion,
+          source: row.source as Estimate["source"],
+          bookingId: row.bookingId ? row.bookingId.toString() : null,
+          createdAt: row.createdAt,
+        };
+      } catch (error) {
+        this.logDbFallback(error);
+      }
+    }
+    const estimate = this.estimates.find((e) => e.id === id);
+    if (!estimate) return undefined;
+    estimate.bookingId = bookingId;
+    return estimate;
+  }
+
+  async updateEstimateFinalBudget(bookingId: string, finalBudget: number): Promise<Estimate | undefined> {
+    if (db) {
+      const numericBookingId = Number.parseInt(bookingId, 10);
+      if (Number.isNaN(numericBookingId)) return undefined;
+      try {
+        const [row] = await db
+          .update(estimatesTable)
+          .set({ finalBudget })
+          .where(eq(estimatesTable.bookingId, numericBookingId))
+          .returning();
+        if (!row) return undefined;
+        return {
+          id: row.id.toString(),
+          eventType: row.eventType,
+          guests: row.guests,
+          location: row.location,
+          decor: row.decor,
+          date: row.date,
+          estimatedBudget: row.estimatedBudget,
+          finalBudget: row.finalBudget ?? null,
+          currency: row.currency,
+          modelVersion: row.modelVersion,
+          source: row.source as Estimate["source"],
+          bookingId: row.bookingId ? row.bookingId.toString() : null,
+          createdAt: row.createdAt,
+        };
+      } catch (error) {
+        this.logDbFallback(error);
+      }
+    }
+    const estimate = this.estimates.find((e) => e.bookingId === bookingId);
+    if (!estimate) return undefined;
+    estimate.finalBudget = finalBudget;
+    return estimate;
+  }
+
+  async upsertDefaultSuperAdmin(username: string, password: string): Promise<AdminAccount> {
+    if (db) {
+      try {
+        const existingDefault = await db
+          .select()
+          .from(adminsTable)
+          .where(eq(adminsTable.isDefault, true))
+          .limit(1);
+
+        if (existingDefault[0]) {
+          const current = existingDefault[0];
+          const nextHash = verifyPassword(password, current.passwordHash)
+            ? current.passwordHash
+            : hashPassword(password);
+
+          const [row] = await db
+            .update(adminsTable)
+            .set({
+              username,
+              passwordHash: nextHash,
+              role: "super_admin",
+              isDefault: true,
+            })
+            .where(eq(adminsTable.id, current.id))
+            .returning();
+
+          return this.toAdminAccount({
+            id: row.id.toString(),
+            username: row.username,
+            passwordHash: row.passwordHash,
+            role: row.role as AdminAccount["role"],
+            isDefault: row.isDefault,
+            createdAt: row.createdAt,
+          });
+        }
+
+        const [row] = await db
+          .insert(adminsTable)
+          .values({
+            username,
+            passwordHash: hashPassword(password),
+            role: "super_admin",
+            isDefault: true,
+          })
+          .returning();
+
+        return this.toAdminAccount({
+          id: row.id.toString(),
+          username: row.username,
+          passwordHash: row.passwordHash,
+          role: row.role as AdminAccount["role"],
+          isDefault: row.isDefault,
+          createdAt: row.createdAt,
+        });
+      } catch (error) {
+        this.logDbFallback(error);
+      }
+    }
+
+    const existingDefault = this.admins.find((admin) => admin.isDefault);
+    if (existingDefault) {
+      existingDefault.username = username;
+      existingDefault.passwordHash = verifyPassword(password, existingDefault.passwordHash)
+        ? existingDefault.passwordHash
+        : hashPassword(password);
+      existingDefault.role = "super_admin";
+      return this.toAdminAccount(existingDefault);
+    }
+
+    const admin: StoredAdmin = {
+      id: Math.random().toString(36).substring(7),
+      username,
+      passwordHash: hashPassword(password),
+      role: "super_admin",
+      isDefault: true,
+      createdAt: new Date(),
+    };
+    this.admins.unshift(admin);
+    return this.toAdminAccount(admin);
+  }
+
+  async authenticateAdmin(username: string, password: string): Promise<AdminAccount | undefined> {
+    if (db) {
+      try {
+        const rows = await db
+          .select()
+          .from(adminsTable)
+          .where(eq(adminsTable.username, username))
+          .limit(1);
+        const row = rows[0];
+        if (!row) return undefined;
+        if (!verifyPassword(password, row.passwordHash)) return undefined;
+
+        return {
+          id: row.id.toString(),
+          username: row.username,
+          role: row.role as AdminAccount["role"],
+          isDefault: row.isDefault,
+          createdAt: row.createdAt,
+        };
+      } catch (error) {
+        this.logDbFallback(error);
+      }
+    }
+
+    const admin = this.admins.find((item) => item.username === username);
+    if (!admin || !verifyPassword(password, admin.passwordHash)) return undefined;
+    return this.toAdminAccount(admin);
+  }
+
+  async getAdmins(): Promise<AdminAccount[]> {
+    if (db) {
+      try {
+        const rows = await db.select().from(adminsTable).orderBy(desc(adminsTable.createdAt));
+        return rows.map((row) => ({
+          id: row.id.toString(),
+          username: row.username,
+          role: row.role as AdminAccount["role"],
+          isDefault: row.isDefault,
+          createdAt: row.createdAt,
+        }));
+      } catch (error) {
+        this.logDbFallback(error);
+      }
+    }
+
+    return this.admins.map((admin) => this.toAdminAccount(admin));
+  }
+
+  async getAdminById(id: string): Promise<AdminAccount | undefined> {
+    if (db) {
+      const numericId = Number.parseInt(id, 10);
+      if (!Number.isNaN(numericId)) {
+        try {
+          const rows = await db
+            .select()
+            .from(adminsTable)
+            .where(eq(adminsTable.id, numericId))
+            .limit(1);
+          const row = rows[0];
+          if (!row) return undefined;
+          return {
+            id: row.id.toString(),
+            username: row.username,
+            role: row.role as AdminAccount["role"],
+            isDefault: row.isDefault,
+            createdAt: row.createdAt,
+          };
+        } catch (error) {
+          this.logDbFallback(error);
+        }
+      }
+    }
+
+    const admin = this.admins.find((item) => item.id === id);
+    return admin ? this.toAdminAccount(admin) : undefined;
+  }
+
+  async createAdmin(admin: InsertAdmin): Promise<AdminAccount> {
+    if (db) {
+      try {
+        const existing = await db
+          .select()
+          .from(adminsTable)
+          .where(eq(adminsTable.username, admin.username))
+          .limit(1);
+        if (existing[0]) {
+          throw new Error("Admin username already exists");
+        }
+
+        const [row] = await db
+          .insert(adminsTable)
+          .values({
+            username: admin.username,
+            passwordHash: hashPassword(admin.password),
+            role: "admin",
+            isDefault: false,
+          })
+          .returning();
+
+        return {
+          id: row.id.toString(),
+          username: row.username,
+          role: row.role as AdminAccount["role"],
+          isDefault: row.isDefault,
+          createdAt: row.createdAt,
+        };
+      } catch (error) {
+        if (error instanceof Error && error.message === "Admin username already exists") {
+          throw error;
+        }
+        this.logDbFallback(error);
+      }
+    }
+
+    if (this.admins.some((item) => item.username === admin.username)) {
+      throw new Error("Admin username already exists");
+    }
+
+    const nextAdmin: StoredAdmin = {
+      id: Math.random().toString(36).substring(7),
+      username: admin.username,
+      passwordHash: hashPassword(admin.password),
+      role: "admin",
+      isDefault: false,
+      createdAt: new Date(),
+    };
+    this.admins.unshift(nextAdmin);
+    return this.toAdminAccount(nextAdmin);
+  }
+
+  async deleteAdmin(id: string): Promise<boolean> {
+    if (db) {
+      const numericId = Number.parseInt(id, 10);
+      if (!Number.isNaN(numericId)) {
+        try {
+          const deleted = await db
+            .delete(adminsTable)
+            .where(eq(adminsTable.id, numericId))
+            .returning({ id: adminsTable.id });
+          return deleted.length > 0;
+        } catch (error) {
+          this.logDbFallback(error);
+        }
+      }
+    }
+
+    const before = this.admins.length;
+    this.admins = this.admins.filter((admin) => admin.id !== id);
+    return this.admins.length < before;
   }
 }
 

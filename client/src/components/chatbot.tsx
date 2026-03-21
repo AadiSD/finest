@@ -18,7 +18,7 @@ export function Chatbot() {
     const text = input.trim();
     if (!text) return;
 
-    const next = [...messages, { role: "user", content: text }];
+    const next: ChatMessage[] = [...messages, { role: "user", content: text }];
     setMessages(next);
     setInput("");
     setLoading(true);
@@ -32,7 +32,7 @@ export function Chatbot() {
 
       if (!res.ok) throw new Error("Chat failed");
       const data = await res.json();
-      setMessages([...next, { role: "assistant", content: data.reply }]);
+      setMessages([...next, { role: "assistant", content: data.reply as string }]);
     } catch {
       setMessages([...next, { role: "assistant", content: "Sorry, I couldn't respond right now." }]);
     } finally {
