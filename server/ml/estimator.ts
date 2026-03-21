@@ -68,9 +68,9 @@ const BASE_BUDGET = 150000;
 const PER_GUEST = 1100;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const MODEL_PATH = path.join(__dirname, "model.json");
 
 let cachedModel: LinearModel | null = null;
+let cachedModelPath: string | null | undefined;
 
 function roundBudget(value: number) {
   return Math.max(75000, Math.round(value));
@@ -80,11 +80,31 @@ function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
 }
 
+function resolveModelPath() {
+  if (cachedModelPath !== undefined) {
+    return cachedModelPath;
+  }
+
+  const candidates = [
+    process.env.ESTIMATOR_MODEL_PATH,
+    path.join(process.cwd(), "server", "ml", "model.json"),
+    path.join(process.cwd(), "dist", "server", "ml", "model.json"),
+    path.join(process.cwd(), "dist", "model.json"),
+    path.join(__dirname, "model.json"),
+    path.join(__dirname, "server", "ml", "model.json"),
+    path.join(__dirname, "..", "server", "ml", "model.json"),
+  ].filter((value): value is string => Boolean(value));
+
+  cachedModelPath = candidates.find((candidate) => existsSync(candidate)) ?? null;
+  return cachedModelPath;
+}
+
 function loadModel(): LinearModel | null {
   if (cachedModel) return cachedModel;
   try {
-    if (!existsSync(MODEL_PATH)) return null;
-    cachedModel = JSON.parse(readFileSync(MODEL_PATH, "utf8")) as LinearModel;
+    const modelPath = resolveModelPath();
+    if (!modelPath) return null;
+    cachedModel = JSON.parse(readFileSync(modelPath, "utf8")) as LinearModel;
     return cachedModel;
   } catch {
     return null;

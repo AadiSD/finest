@@ -232,6 +232,13 @@ export class MemStorage implements IStorage {
     };
   }
 
+  private parseDbId(id: string): number | null {
+    if (!/^\d+$/.test(id)) {
+      return null;
+    }
+    return Number.parseInt(id, 10);
+  }
+
   // Event operations
   async getAllEvents(): Promise<Event[]> {
     return this.events;
@@ -350,9 +357,8 @@ export class MemStorage implements IStorage {
   }
 
   async updateBookingStatus(id: string, status: "accepted" | "rejected"): Promise<BookingRequest | undefined> {
-    if (db) {
-      const numericId = Number.parseInt(id, 10);
-      if (Number.isNaN(numericId)) return undefined;
+    const numericId = this.parseDbId(id);
+    if (db && numericId !== null) {
       try {
         const [row] = await db
           .update(bookingsTable)
@@ -480,10 +486,9 @@ export class MemStorage implements IStorage {
   }
 
   async updateEstimateBooking(id: string, bookingId: string): Promise<Estimate | undefined> {
-    if (db) {
-      const numericId = Number.parseInt(id, 10);
-      const numericBookingId = Number.parseInt(bookingId, 10);
-      if (Number.isNaN(numericId) || Number.isNaN(numericBookingId)) return undefined;
+    const numericId = this.parseDbId(id);
+    const numericBookingId = this.parseDbId(bookingId);
+    if (db && numericId !== null && numericBookingId !== null) {
       try {
         const [row] = await db
           .update(estimatesTable)
@@ -517,9 +522,8 @@ export class MemStorage implements IStorage {
   }
 
   async updateEstimateFinalBudget(bookingId: string, finalBudget: number): Promise<Estimate | undefined> {
-    if (db) {
-      const numericBookingId = Number.parseInt(bookingId, 10);
-      if (Number.isNaN(numericBookingId)) return undefined;
+    const numericBookingId = this.parseDbId(bookingId);
+    if (db && numericBookingId !== null) {
       try {
         const [row] = await db
           .update(estimatesTable)
@@ -682,27 +686,25 @@ export class MemStorage implements IStorage {
   }
 
   async getAdminById(id: string): Promise<AdminAccount | undefined> {
-    if (db) {
-      const numericId = Number.parseInt(id, 10);
-      if (!Number.isNaN(numericId)) {
-        try {
-          const rows = await db
-            .select()
-            .from(adminsTable)
-            .where(eq(adminsTable.id, numericId))
-            .limit(1);
-          const row = rows[0];
-          if (!row) return undefined;
-          return {
-            id: row.id.toString(),
-            username: row.username,
-            role: row.role as AdminAccount["role"],
-            isDefault: row.isDefault,
-            createdAt: row.createdAt,
-          };
-        } catch (error) {
-          this.logDbFallback(error);
-        }
+    const numericId = this.parseDbId(id);
+    if (db && numericId !== null) {
+      try {
+        const rows = await db
+          .select()
+          .from(adminsTable)
+          .where(eq(adminsTable.id, numericId))
+          .limit(1);
+        const row = rows[0];
+        if (!row) return undefined;
+        return {
+          id: row.id.toString(),
+          username: row.username,
+          role: row.role as AdminAccount["role"],
+          isDefault: row.isDefault,
+          createdAt: row.createdAt,
+        };
+      } catch (error) {
+        this.logDbFallback(error);
       }
     }
 
@@ -764,18 +766,16 @@ export class MemStorage implements IStorage {
   }
 
   async deleteAdmin(id: string): Promise<boolean> {
-    if (db) {
-      const numericId = Number.parseInt(id, 10);
-      if (!Number.isNaN(numericId)) {
-        try {
-          const deleted = await db
-            .delete(adminsTable)
-            .where(eq(adminsTable.id, numericId))
-            .returning({ id: adminsTable.id });
-          return deleted.length > 0;
-        } catch (error) {
-          this.logDbFallback(error);
-        }
+    const numericId = this.parseDbId(id);
+    if (db && numericId !== null) {
+      try {
+        const deleted = await db
+          .delete(adminsTable)
+          .where(eq(adminsTable.id, numericId))
+          .returning({ id: adminsTable.id });
+        return deleted.length > 0;
+      } catch (error) {
+        this.logDbFallback(error);
       }
     }
 

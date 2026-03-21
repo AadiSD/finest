@@ -46,15 +46,6 @@ export default function EventPlanner() {
     queryKey: ["/api/bookings/blocked-dates"],
   });
 
-  const { data: modelInfo } = useQuery<{
-    modelVersion: string;
-    trainedAt?: string;
-    trainingRows?: number;
-    metrics?: { mae: number; rmse: number; mape: number };
-  }>({
-    queryKey: ["/api/estimate/model-info"],
-  });
-
   const disabledDays = useMemo(() => {
     return blockedDates.map((d) => new Date(d));
   }, [blockedDates]);
@@ -232,9 +223,6 @@ export default function EventPlanner() {
                     <div className="text-sm text-muted-foreground">
                       Range: {estimateResult.currency} {estimateResult.budgetLow.toLocaleString("en-IN")} - {estimateResult.currency} {estimateResult.budgetHigh.toLocaleString("en-IN")}
                     </div>
-                    <div className="text-sm text-muted-foreground">
-                      Model: {estimateResult.modelVersion} • Confidence: {estimateResult.confidenceLabel} ({Math.round(estimateResult.confidenceScore * 100)}%)
-                    </div>
                   </div>
                 )}
               </div>
@@ -329,11 +317,6 @@ export default function EventPlanner() {
           </Card>
         )}
 
-        <div className="max-w-5xl mx-auto text-sm text-muted-foreground">
-          Active model: {modelInfo?.modelVersion ?? "baseline-v1"}
-          {modelInfo?.metrics ? ` • MAE INR ${Math.round(modelInfo.metrics.mae).toLocaleString("en-IN")}` : ""}
-          {modelInfo?.trainingRows ? ` • Training rows ${modelInfo.trainingRows}` : ""}
-        </div>
       </div>
     </div>
   );
